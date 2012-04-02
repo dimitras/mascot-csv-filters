@@ -1,7 +1,3 @@
-# FasterCSV.foreach("data.csv", :quote_char => '"', :col_sep =>'\t', :row_sep =>:auto) do |row|	end
-
-# require 'rubygems'
-# require 'faster_csv'
 require 'protein_hit'
 
 class CSVParser
