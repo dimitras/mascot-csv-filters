@@ -39,23 +39,43 @@ class RunCSV
 				common_peptides_out_fp.puts hit.to_csv
 			end
 		end
+		if expA_fileA_csvp.has_peptide_with_other_mods(peptide)
+			expA_fileA_csvp.protein_hits_with_other_mods(peptide).each do |hit|
+				common_peptides_out_fp.puts hit.to_csv
+			end
+		end
 		if expA_fileB_csvp.has_peptide(peptide)
 			expA_fileB_csvp.protein_hits(peptide).each do |hit|
 				common_peptides_out_fp.puts hit.to_csv
 			end
+		if expA_fileB_csvp.has_peptide_with_other_mods(peptide)
+			expA_fileB_csvp.protein_hits_with_other_mods(peptide).each do |hit|
+				common_peptides_out_fp.puts hit.to_csv
+			end
+		end
 		end
 		if expB_fileA_csvp.has_peptide(peptide)
 			expB_fileA_csvp.protein_hits(peptide).each do |hit|
 				common_peptides_out_fp.puts hit.to_csv
 			end
+		if expB_fileA_csvp.has_peptide_with_other_mods(peptide)
+			expB_fileA_csvp.protein_hits_with_other_mods(peptide).each do |hit|
+				common_peptides_out_fp.puts hit.to_csv
+			end
+		end
 		end
 		if expB_fileB_csvp.has_peptide(peptide)
 			expB_fileB_csvp.protein_hits(peptide).each do |hit|
 				common_peptides_out_fp.puts hit.to_csv
 			end
+		if expB_fileB_csvp.has_peptide_with_other_mods(peptide)
+			expB_fileB_csvp.protein_hits_with_other_mods(peptide).each do |hit|
+				common_peptides_out_fp.puts hit.to_csv
+			end
+		end
 		end
 		count = count + 1
 	end
-	puts count
+	common_peptides_out_fp.puts count.to_s + " peptides found"
 end
 			

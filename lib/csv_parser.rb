@@ -7,6 +7,7 @@ class CSVParser
 		@filename = filename
 		@filehandle = File.new(filename)
 		@index = {}
+		@index_other_mods = {}
 		create_index
 	end
 
@@ -25,6 +26,11 @@ class CSVParser
 						@index[pep_seq] = []
 					end
 					@index[pep_seq] << line_pos
+				else
+					if !@index_other_mods.has_key?(pep_seq) then
+						@index_other_mods[pep_seq] = []
+					end
+					@index_other_mods[pep_seq] << line_pos
 				end
 			end
 		end
@@ -51,6 +57,17 @@ class CSVParser
 			yield hits
 		end
 	end
+
+	# def each_other_mod()
+	# 	@index_other_mods.each_key do |key|
+	# 		hits = []
+	# 		@index_other_mods[key].each do |hit_pos|
+	# 			@filehandle.pos = hit_pos
+	# 			hits << line_parse(@filehandle.readline)
+	# 		end
+	# 		yield hits
+	# 	end
+	# end
 	
 	def line_parse(line)
 		(prot_hit_num, prot_acc, prot_desc, prot_score, prot_mass, prot_matches, prot_matches_sig, prot_sequences, prot_sequences_sig, pep_query, pep_rank, pep_isbold, pep_isunique, pep_exp_mz, pep_exp_mr, pep_exp_z, pep_calc_mr, pep_delta, pep_miss, pep_score, pep_expect, pep_res_before, pep_seq, pep_res_after, pep_var_mod, pep_var_mod_pos, pep_scan_title) = line.chomp.split("|")
@@ -70,6 +87,14 @@ class CSVParser
 			return false
 		end
 	end
+
+	def has_peptide_with_other_mods(peptide)
+		if @index_other_mods.has_key?(peptide)
+			return true
+		else 
+			return false
+		end
+	end
 	
 	def protein_hits(peptide)
 		hits = []
@@ -79,6 +104,15 @@ class CSVParser
 		end
 		return hits
 	end
+
+	def protein_hits_with_other_mods(peptide)
+		other_hits = []
+		@index_other_mods[peptide].each do |hit_pos|
+			@filehandle.pos = hit_pos
+			other_hits << line_parse(@filehandle.readline)
+		end
+		return other_hits
+	end 
 	
 end
 
