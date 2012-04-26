@@ -1,0 +1,1 @@
+# Find the common peptides for all replicates based on the peptide sequences (pep_seq). Filter is based on different identification probability (pep_expect). The cutoffs are 0.05, 0.5 and 1.
