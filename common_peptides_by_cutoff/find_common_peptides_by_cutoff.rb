@@ -35,13 +35,19 @@ class RunCSV
 	end
 
 	common_peptides_in_files = {}
+	peptides_score_counts = {}
 	infile_list.each_value do |csvp|
 		index = csvp.filename.split("/")[1].split("-")[0].to_i - 1
 		csvp.each_peptide do |peptide|
 			if !common_peptides_in_files.has_key?(peptide)
-				common_peptides_in_files[peptide] = []
+				common_peptides_in_files[peptide] = infile_list.keys.map{|x| ''}
+				peptides_score_counts[peptide] = 0
 			end
 			common_peptides_in_files[peptide][index] = 1
+
+			if index >= 0 && index <= 6 # interested to count only the 7 first files
+				peptides_score_counts[peptide] += 1
+			end
 		end
 	end
 
@@ -59,10 +65,24 @@ class RunCSV
 	end
 	common_peptides_out.close
 
-	common_peptides_arrays_out.puts "PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10"
-	common_peptides_in_files.each do |peptide,files|
-		common_peptides_arrays_out.puts peptide.to_s + "," + files.join(",")
+
+	common_peptides_arrays_out.puts "PROT_ACC , PROT_DESC , PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10 , SCORE"
+	peptides_score_counts.sort { |a,b| b[1] <=> a[1] }.each do |peptide,score|
+		infile_list.each_value do |csvp|
+			if csvp.has_peptide(peptide)
+				csvp.protein_hits(peptide).each do |hit|
+					common_peptides_arrays_out.puts '"' + hit.prot_acc.to_s + '","' + hit.prot_desc.to_s + '","' + peptide.to_s + '","' + common_peptides_in_files[peptide].join('","') + '","' + peptides_score_counts[peptide].to_s + '"'
+				end
+			end
+		end
 	end
 	common_peptides_arrays_out.close
 end
+
+
+
+
+
+
+
 			
