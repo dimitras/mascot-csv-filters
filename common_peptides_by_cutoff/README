@@ -1,1 +1,10 @@
-# Find the common peptides for all replicates based on the peptide sequences (pep_seq). Filter is based on different identification probability (pep_expect). The cutoffs are 0.05, 0.5 and 1.
+# Find the common (in one or more files) peptides for all replicates based on the peptide sequences (pep_seq). 
+# Filter is based on different identification probability (pep_expect). 
+# The cutoffs are 0.05, 0.5 and 1.
+
+# The files 'joined' with the joined peptides for all replicates, have preserved all the information with two additional columns. The columns are the filename which is respective to the replicates, and the number of the replicates that each peptide was found.
+# The files 'per_existance' with the peptides' existence in all replicates (1 for existence, 0 for non-existence). Add a score-like column to sort the peptides by significance, by adding the 1s only for 1-7 replicates (the 8-10 replicates are not significant).
+
+# Added third file with the rank product scoring to sort the peptides by significance.
+# The 1-7 replicates are being sorted by descending the pep_score, while the 8-10 are being sorted by ascending the pep_score. This is done to get lowest (worst) rank for the peptides located in 8-10 replicates (penalty-like scoring). Each peptide found in a replicate could be found more than once, so I choose the rank of the hit with the highest pep_score. If a peptide is not found in a replicate means that it was highly impossible so it gets by default the lowest rank in the replicate.
+# In the result file you will see the pep_score (of the highest scored hit) filled in when a peptide exists in a replicate. The last column RP stands for the rank product, and is sorted descending (from the most to the less significant)
