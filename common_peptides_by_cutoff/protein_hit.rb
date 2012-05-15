@@ -21,10 +21,10 @@ class ProteinHit
 		@pep_calc_mr = pep_calc_mr
 		@pep_delta = pep_delta
 		@pep_miss = pep_miss
-		@pep_score = pep_score
-		@pep_expect = pep_expect
+		@pep_score = pep_score.to_f
+		@pep_expect = pep_expect.to_f
 		@pep_res_before = pep_res_before
-		@pep_seq = pep_seq
+		@pep_seq = pep_seq.to_s
 		@pep_res_after = pep_res_after
 		@pep_var_mod = pep_var_mod
 		@pep_var_mod_pos = pep_var_mod_pos

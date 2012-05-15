@@ -51,9 +51,13 @@ class CSVParserForProteinHits
 		end
 
 		if @is_ascending
-			score_index.sort!  {|x,y| x[1] <=> y[1] }
+			score_index.sort!  {|x,y| x[1] <=> y[1]}#.each do |e| 
+			# 	puts "#{e[0]} => #{e[1]}"
+			# end
 		else
-			score_index.sort! {|x,y| y[1] <=> x[1] }
+			score_index.sort! {|x,y| y[1] <=> x[1]}#.each do |e| 
+			# 	puts "#{e[0]} => #{e[1]}"
+			# end
 		end
 
 		score_index.each_with_index do |(line_pos, pep_score), index|

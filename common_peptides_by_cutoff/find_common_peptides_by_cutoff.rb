@@ -1,7 +1,7 @@
 # USAGE
-# ruby find_common_peptides_by_cutoff.rb 10 results/common_peptides_no_cutoff.csv results/common_peptides_arrays_no_cutoff.csv results/common_peptides_rank_product_no_cutoff.csv
-# ruby find_common_peptides_by_cutoff.rb 0.05 results/common_peptides_005_cutoff.csv results/common_peptides_arrays_005_cutoff.csv results/common_peptides_rank_product_005_cutoff.csv
-# ruby find_common_peptides_by_cutoff.rb 0.5 results/common_peptides_05_cutoff.csv results/common_peptides_arrays_05_cutoff.csv results/common_peptides_rank_product_05_cutoff.csv
+# ruby find_common_peptides_by_cutoff.rb 10 results/joined_peps_no_cutoff.csv results/peps_per_existence_no_cutoff.csv results/peps_by_rank_product_no_cutoff.csv
+# ruby find_common_peptides_by_cutoff.rb 0.05 results/joined_peps_005_cutoff.csv results/peps_per_existence_005_cutoff.csv results/peps_by_rank_product_005_cutoff.csv
+# ruby find_common_peptides_by_cutoff.rb 0.5 results/joined_peps_05_cutoff.csv results/peps_per_existence_05_cutoff.csv results/peps_by_rank_product_05_cutoff.csv
 
 require 'csv_parser_for_protein_hits'
 require 'protein_hit'
@@ -90,6 +90,7 @@ class RunCSV
 		infile_list.each_value do |csvp|
 			if csvp.has_peptide(peptide)
 				csvp.protein_hits(peptide).each do |hit|
+					puts "> " + csvp.protein_hits(peptide).to_s
 					joined_replicates_per_pep_out.puts hit.to_csv + ",\"" + total_peptide_hits[peptide].to_s + "\""
 				end
 			end
