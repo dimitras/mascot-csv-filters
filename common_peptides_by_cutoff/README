@@ -1,6 +1,7 @@
 # Find the common (in one or more files) peptides for all replicates based on the peptide sequences (pep_seq). 
 # Filter is based on different identification probability (pep_expect). 
 # The cutoffs are 0.05, 0.5 and 1.
+# The uncharacterized (description field) proteins in the protein hits are replaced by the annotated from the uniprot proteome db.
 
 # The files 'joined' with the joined peptides for all replicates, have preserved all the information with two additional columns. The columns are the filename which is respective to the replicates, and the number of the replicates that each peptide was found.
 # The files 'per_existance' with the peptides' existence in all replicates (1 for existence, 0 for non-existence). Add a score-like column to sort the peptides by significance, by adding the 1s only for 1-7 replicates (the 8-10 replicates are not significant).
