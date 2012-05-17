@@ -5,7 +5,7 @@ class CSVParserForProteinHits
 
 	def initialize(filename, cutoff, is_ascending, id)
 		@filename = filename
-		@cutoff = cutoff
+		@cutoff = cutoff.to_f
 		@is_ascending = is_ascending
 		@id = id.to_i
 		@filehandle = File.new(filename)

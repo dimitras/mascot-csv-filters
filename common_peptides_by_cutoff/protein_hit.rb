@@ -4,7 +4,7 @@ class ProteinHit
 	def initialize(prot_hit_num, prot_acc, prot_desc, prot_score, prot_mass, prot_matches, prot_matches_sig, prot_sequences, prot_sequences_sig, pep_query, pep_rank, pep_isbold, pep_isunique, pep_exp_mz, pep_exp_mr, pep_exp_z, pep_calc_mr, pep_delta, pep_miss, pep_score, pep_expect, pep_res_before, pep_seq, pep_res_after, pep_var_mod, pep_var_mod_pos, pep_scan_title, filename)
 		@prot_hit_num = prot_hit_num
 		@prot_acc = prot_acc
-		@prot_desc = prot_desc
+		@prot_desc = prot_desc.to_s
 		@prot_score = prot_score
 		@prot_mass = prot_mass
 		@prot_matches = prot_matches
