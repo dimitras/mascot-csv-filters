@@ -8,7 +8,7 @@ require 'protein_hit'
 require 'fasta_parser'
 require 'fasta_entry'
 
-cutoff = ARGV[0]
+cutoff = ARGV[0].to_f
 proteome_db_fasta_file = ARGV[1]
 infile_list = {}
 # input files
@@ -44,16 +44,6 @@ def uncharacterized_to_annotated(protein_hit)
 	end
 end
 
-# 	infile_list.each_value do |csvp|
-# 		csvp.each_hit do |protein_hit|
-# 			if protein_hit.prot_desc.include? "Uncharacterized"
-# 				fasta_entry = proteome_db_fap.entry_by_id(protein_hit.prot_acc)
-# 				if fasta_entry != nil
-# 					protein_hit.prot_desc = fasta_entry.desc
-# 				end
-# 			end
-# 		end
-# 	end
 
 # count total peptide hits in all replicates
 total_peptide_hits = {}
@@ -89,6 +79,7 @@ end
 # get the rank product for the highest scored hit of each peptide, in all replicates
 pep_scores = {}
 pep_rank_product = Hash.new { |h,k| h[k] = 1 }
+pep_penalized_rp = Hash.new { |h,k| h[k] = 1 }
 total_peptide_hits.each_key do |peptide|
 	infile_list.each_value do |csvp|
 		if !pep_scores.has_key?(peptide)
@@ -97,10 +88,16 @@ total_peptide_hits.each_key do |peptide|
 		if !csvp.has_peptide(peptide)
 			pep_scores[peptide][csvp.id] = 0
 			pep_rank_product[peptide] *= csvp.worst_rank
+			pep_penalized_rp[peptide] *= csvp.worst_rank
 		else
 			highest_scored_hit = csvp.highest_scored_hit_for_pep(peptide)
 			pep_scores[peptide][csvp.id] = highest_scored_hit.pep_score
 			pep_rank_product[peptide] *= highest_scored_hit.rank
+			pep_penalized_rp[peptide] *= highest_scored_hit.rank
+			if csvp.is_ascending
+				pep_penalized_rp[peptide] *= 10
+			end
+				
 		end
 	end
 end
@@ -113,6 +110,7 @@ total_peptide_hits.sort { |a,b| b[1] <=> a[1] }.each do |peptide,count|
 	infile_list.each_value do |csvp|
 		if csvp.has_peptide(peptide)
 			csvp.protein_hits(peptide).each do |hit|
+				uncharacterized_to_annotated(hit)
 				joined_replicates_per_pep_out.puts hit.to_csv + ",\"" + total_peptide_hits[peptide].to_s + "\""
 			end
 		end
@@ -124,20 +122,26 @@ joined_replicates_per_pep_out.close
 # create array with the existance of each peptide in all replicates & add a score adding 1 foreach existance for 7 first reps
 pep_existance_in_replicates_out.puts "PROT_ACC , PROT_DESC , PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10 , SCORE"
 pep_existance_counts.sort { |a,b| b[1] <=> a[1] }.each do |peptide,score|
+	protein_acc = nil
+	description = nil
 	infile_list.each_value do |csvp|
 		if csvp.has_peptide(peptide)
 			csvp.protein_hits(peptide).each do |hit|
-				pep_existance_in_replicates_out.puts '"' + hit.prot_acc.to_s + '","' + hit.prot_desc.to_s + '","' + peptide.to_s + '","' + pep_existance_in_replicates[peptide].join('","') + '","' + pep_existance_counts[peptide].to_s + '"'
+				highest_scored_hit = csvp.highest_scored_hit_for_pep(peptide) # do I need this?
+				uncharacterized_to_annotated(highest_scored_hit)
+				protein_acc = highest_scored_hit.prot_acc.to_s
+				description = highest_scored_hit.prot_desc.to_s
 			end
 		end
 	end
+	pep_existance_in_replicates_out.puts '"' + protein_acc + '","' + description + '","' + peptide.to_s + '","' + pep_existance_in_replicates[peptide].join('","') + '","' + pep_existance_counts[peptide].to_s + '"'
 end
 pep_existance_in_replicates_out.close
 
 
 # create array with the ranks of the highest scored hit of each peptide in all replicates & add a score by calculating the product rank for each peptide, firstly sorting by pep_score (descending for the first 7 reps & ascnding for the 3 last ones)
-peps_sorted_by_rank_product_out.puts "PROT_ACC , PROT_DESC , PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10 , RP"
-pep_rank_product.sort_by{|peptide,rp| rp}.each do |peptide,rp|
+peps_sorted_by_rank_product_out.puts "PROT_ACC , PROT_DESC , PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10 , RP, PENALIZED RP"
+	pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 	protein_acc = nil
 	description = nil
 	infile_list.each_value do |csvp|
@@ -146,12 +150,9 @@ pep_rank_product.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 			uncharacterized_to_annotated(highest_scored_hit)
 			protein_acc = highest_scored_hit.prot_acc.to_s
 			description = highest_scored_hit.prot_desc.to_s
-			peps_sorted_by_rank_product_out.puts '"' + protein_acc + '","' + description + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '"'
 		end
 	end
+	peps_sorted_by_rank_product_out.puts '"' + protein_acc + '","' + description + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '","' + (pep_penalized_rp[peptide]**(1/infile_list.length.to_f)).to_s + '"'
 end
 peps_sorted_by_rank_product_out.close
-
-
-
 

@@ -60,7 +60,7 @@ class CSVParserForProteinHits
 			# end
 		end
 
-		score_index.each_with_index do |(line_pos, pep_score), index|
+		score_index.each_with_index do |(line_pos, pep_score), index| # index of the array score_index
 			@rank_index[line_pos.to_s] = index + 1
 		end
 	end
