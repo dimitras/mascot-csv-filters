@@ -13,3 +13,7 @@
 # In the result file you will see the pep_score (of the highest scored hit) filled in when a peptide exists in a replicate. The last column RP stands for the rank product, and is sorted descending (from the most to the less significant)
 
 # Added more penalty in the rank product. Multiply by 10 the ranks in the last 3 files. this penalty is not applied if a peptide is not found in a replicate, it just gets by default the lowest rank in the replicate.
+
+# Find if the acetyl modification on specific amino acids of the peptides is conserved through different species so as to identify the peptides that are more significant for investigation. Used the maf-like aligned seqs and fixed a translator to go from uniprot id to genename and then to refseq id 'NM_'.
+
+
