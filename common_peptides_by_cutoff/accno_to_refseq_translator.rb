@@ -9,7 +9,7 @@ class AccnoToRefseqTranslator
 		@filehandle = File.new(filename)
 		@count = 0
 		@entrypos = []
-		@entrypos_by_id = {}
+		@entrypos_by_id = Hash.new { |h,k| h[k] = [] }
 		create_index
 	end
 
@@ -33,7 +33,7 @@ class AccnoToRefseqTranslator
 				if genename.include? ","
 					genename = genename.split(',')[0]
 				end
-				@entrypos_by_id[genename] = @filehandle.pos - line.length - 1
+				@entrypos_by_id[genename] << @filehandle.pos - line.length - 1
 				@entrypos << @filehandle.pos - line.length - 1
 				self.increment
 			end
@@ -51,8 +51,12 @@ class AccnoToRefseqTranslator
 	
 	def refseq_from_genename(genename)
 		if @entrypos_by_id.has_key?(genename)
-			@filehandle.pos = @entrypos_by_id[genename]
-			return line_parse(@filehandle.readline)
+			entries = []
+			@entrypos_by_id[genename].each do |pos|
+				@filehandle.pos = pos
+				entries << line_parse(@filehandle.readline)
+			end
+			return entries
 		else
 			return nil
 		end

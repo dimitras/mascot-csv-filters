@@ -25,5 +25,11 @@ class MAFEntry
     return @seq[pos..pos]
   end
 
+  def subseq_contained_in_seq?(subseq)
+    if @seq.include? "#{subseq}"
+      return true
+    end
+  end
+
 end
 

@@ -13,6 +13,12 @@ class MAFBlock
 		@ref_species = ref_species
 	end
 
+	def subseq_contained_in_ref_species?(seq)
+		if @maf_entries[@ref_species].subseq_contained_in_seq?(seq)
+			return true
+		end
+	end
+
 	def find_seq_positions_in_ref_species(seq)
 		return @maf_entries[@ref_species].positions_of_subseq(seq)
 	end
