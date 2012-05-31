@@ -38,7 +38,7 @@ class TestMAFEntry < Test::Unit::TestCase
 	end
 
 	def test_corresponding_letters_for_secondary_species
-		assert_equal(["L(7)", "L(8)", "L(7)", "L(8)", "L(7)", "L(8)", "NA", "NA"], @block.corresponding_letters_for_secondary_species(@subseq, @letter, @species_ids))
+		assert_equal(["L(7)L(8)", "L(7)L(8)", "L(7)L(8)", "NANA"], @block.corresponding_letters_for_secondary_species(@subseq, @letter, @species_ids))
 	end
 
 end
