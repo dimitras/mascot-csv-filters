@@ -5,6 +5,7 @@ class TestFastaEntry < Test::Unit::TestCase
 
 	def setup
 		@entry = FastaEntry.new("sp","A0A183","LCE6A_HUMAN Late cornified envelope protein 6A OS=Homo sapiens GN=LCE6A PE=2 SV=1","MSQQKQQSWKPPNVPKCSPPQRSNPCLAPYSTPCGAPHSEGCHSSSQRPEVQKPRRARQKLRCLSRGTTYHCKEEECEGD")
+		@subseq = 'LAPY'
 	end
 	
 	def test_fasta_entry
@@ -14,6 +15,10 @@ class TestFastaEntry < Test::Unit::TestCase
 	def test_attributes
 		assert_equal("A0A183", @entry.accno)
 		assert_equal("MSQQKQQSWKPPNVPKCSPPQRSNPCLAPYSTPCGAPHSEGCHSSSQRPEVQKPRRARQKLRCLSRGTTYHCKEEECEGD", @entry.seq)
+	end
+
+	def test_subseq_contained_in_seq?()
+		assert_equal(true, @entry.subseq_contained_in_seq?(@subseq))
 	end
 
 end

@@ -25,6 +25,10 @@ class TestMAFEntry < Test::Unit::TestCase
 		assert_equal("hg19", @block.ref_species)
 	end
 
+	def test_subseq_contained_in_ref_species?()
+		assert_equal(true, @block.subseq_contained_in_ref_species?(@subseq))
+	end
+
 	def test_find_seq_positions_in_ref_species
 		assert_equal([3], @block.find_seq_positions_in_ref_species(@subseq))
 	end
