@@ -14,6 +14,6 @@
 
 # Added more penalty in the rank product. Multiply by 10 the ranks in the last 3 files. this penalty is not applied if a peptide is not found in a replicate, it just gets by default the lowest rank in the replicate.
 
-# Find if the acetyl modification on specific amino acids of the peptides is conserved through different species so as to identify the peptides that are more significant for investigation. Used the maf-like aligned seqs and fixed a translator to go from uniprot id to genename and then to refseq id 'NM_'.
+# Find if the acetyl modification on specific amino acids of the peptides is conserved through different species so as to identify the peptides that are more significant for investigation. Used the maf-like aligned seqs and fixed a translator to go from uniprot id to genename and then to refseq id 'NM_'. Note here that one genename can link to many refseq ids, so I find in which sequence (refseq id) of those linked to a genename, the peptide is contained.
 
 
