@@ -5,6 +5,9 @@
 # The cutoffs are 0.05, 0.5 and 1.
 # The uncharacterized (description field) proteins in the protein hits are replaced by the annotated from the uniprot proteome db.
 
+Origin of the raw database file used:
+- Database: downloaded from Uniprot in fasta format
+
 # The files 'joined' with the joined peptides for all replicates, have preserved all the information with two additional columns. The columns are the filename which is respective to the replicates, and the number of the replicates that each peptide was found.
 # The files 'per_existance' with the peptides' existence in all replicates (1 for existence, 0 for non-existence). Add a score-like column to sort the peptides by significance, by adding the 1s only for 1-7 replicates (the 8-10 replicates are not significant).
 
@@ -15,5 +18,19 @@
 # Added more penalty in the rank product. Multiply by 10 the ranks in the last 3 files. this penalty is not applied if a peptide is not found in a replicate, it just gets by default the lowest rank in the replicate.
 
 # Find if the acetyl modification on specific amino acids of the peptides is conserved through different species so as to identify the peptides that are more significant for investigation. Used the maf-like aligned seqs and fixed a translator to go from uniprot id to genename and then to refseq id 'NM_'. Note here that one genename can link to many refseq ids, so I find in which sequence (refseq id) of those linked to a genename, the peptide is contained.
+
+Origin of the raw files used:
+- MAF file: exported from UCSC > Tables (http://genome.ucsc.edu/cgi-bin/hgTables) > 
+Group: Gene predictions
+Track: Refseq genes
+Table: Refgene
+Identifiers: upload list with accnos
+Output: CDS FASTA alignment from multiple alignment
+- Translator file: exported from UCSC > Tables (http://genome.ucsc.edu/cgi-bin/hgTables) > 
+Group: Gene predictions
+Track: Refseq genes
+Table: Refgene
+Output: Selected fields from primary and related tables
+Fields: hg19.refGene.name, hg19.kgXref.geneSymbol
 
 
