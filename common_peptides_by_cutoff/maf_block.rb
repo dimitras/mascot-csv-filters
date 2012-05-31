@@ -39,13 +39,15 @@ class MAFBlock
 		letters = []
 		positions = find_positions_for_seq_letter_in_ref_species(seq, letter)
 		species_ids.each do |species_id|
+			letters_by_species = ''
 			positions.each do |position|
 				if !@maf_entries.has_key?(species_id)
-					letters << "NA"
+					letters_by_species << "NA"
 				else
-					letters << @maf_entries[species_id].letter_at_position(position).to_s + "(" + position.to_s + ")"
+					letters_by_species << @maf_entries[species_id].letter_at_position(position).to_s + "(" + position.to_s + ")"
 				end
 			end
+			letters << letters_by_species
 		end
 		return letters
 	end

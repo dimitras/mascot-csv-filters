@@ -144,7 +144,7 @@ end
 pep_existance_in_replicates_out.close
 
 
-# create array with the ranks of the highest scored hit of each peptide in all replicates & add a score by calculating the product rank for each peptide, firstly sorting by pep_score (descending for the first 7 reps & ascnding for the 3 last ones)
+# create array with the ranks of the highest scored hit of each peptide in all replicates & add a score by calculating the product rank for each peptide, firstly sorting by pep_score (descending for the first 7 reps & ascnding for the 3 last ones). Also find if the acetyl modified amino acids of the peptides are conserved through different species.
 species_ids = @mafp.species_ids
 species_ids_str = species_ids.join(',')
 peps_sorted_by_rank_product_out.puts "PROT_ACC , PROT_DESC , GENENAME, PEPTIDE , R1 , R2 , R3 , R4 , R5 , R6 , R7 , R8 , R9 , R10 , RP, PENALIZED RP, #{species_ids_str}"
@@ -175,8 +175,10 @@ pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 		@refseq_from_gene_fp.refseq_from_genename(genename).each do |entry|
 			refseq = entry.accno
 			maf_block = @mafp.maf_block_by_id(refseq)
-			if maf_block.subseq_contained_in_ref_species?(peptide) # an de to vrei omos? afinei kena.. ti na kanei?
+			if maf_block != nil && maf_block.subseq_contained_in_ref_species?(peptide)
 				break
+			elsif maf_block == nil
+				next
 			end
 		end
 	else
@@ -186,11 +188,13 @@ pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 	species_ids.each_index do |species_idx|
 		letters_in_conserved_positions = []
 		letters.keys.each do |letter|
+			if maf_block == nil
+				next
+			end
 			letters_for_secondary_species = maf_block.corresponding_letters_for_secondary_species(peptide, letter, species_ids)
 			letters_in_conserved_positions << letter.to_s + ":" + letters_for_secondary_species[species_idx].to_s
-			# ex. L:L(4),L(6)
 		end
-		letters_in_conserved_positions_in_all_species << letters_in_conserved_positions.join(",") # ex. S:S(1),S(2),L:L(4),L(6)
+		letters_in_conserved_positions_in_all_species << letters_in_conserved_positions.join(",")
 	end
 
 	peps_sorted_by_rank_product_out.puts '"' + protein_acc + '","' + description + '","' + genename + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '","' + (pep_penalized_rp[peptide]**(1/infile_list.length.to_f)).to_s + '","' + letters_in_conserved_positions_in_all_species.join('","') + '"'
