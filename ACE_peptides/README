@@ -1,0 +1,75 @@
+# Data: All samples are human platelets with multiple biological replicates, which means all the sample preparation and mass spectrometry are independent.
+
+	Origin of the csv files:
+		- Mascot dat files for endogenous ace: 
+			Replicates	Description	Job# (.CSV)	Score
+			ACE_1	replicates_1_Non_T	F001526	+
+			ACE_2	replicates_1_ASA_T	F001504	+
+			ACE_3	replicates_1_3HASA_T	F001517	+
+			ACE_4	replicates_2_3HASA_T	F001583	+
+			ACE_5	replicates_2_3HASA_TG	F001584	+
+			ACE_6	replicates_3_3HASA_TG	F001585	+
+			ACE_7	replicates_4_3HASA_T	F001586	+
+			ACE_8	replicates_4_3HASA_TG	F001587	+
+			ACE_9	replicates_5_ASA_T	F001594	+
+			ACE_10	replicates_5_ASA_TG	F001515	+
+			ACE_11	replicates_5_3HASA_T	F001590	+
+			ACE_12	replicates_5_3HASA_TG	F001514	+
+
+		- Mascot dat files for 3H ace: 
+			Replicates	Description	Job# (.CSV)	Score
+			3H_ACE_1	replicates_1_Non_T	F001525	-
+			3H_ACE_2	replicates_1_ASA_T	F001493	-
+			3H_ACE_3	replicates_1_3HASA_T	F001516	+
+			3H_ACE_4	replicates_2_3HASA_T	F001506	+
+			3H_ACE_5	replicates_2_3HASA_TG	F001505	+
+			3H_ACE_6	replicates_3_3HASA_TG	F001507	+
+			3H_ACE_7	replicates_4_3HASA_T	F001509	+
+			3H_ACE_8	replicates_4_3HASA_TG	F001508	+
+			3H_ACE_9	replicates_5_ASA_T	F001593	-
+			3H_ACE_10	replicates_5_ASA_TG	F001521	-
+			3H_ACE_11	replicates_5_3HASA_T	F001589	+
+			3H_ACE_12	replicates_5_3HASA_TG	F001513	+
+
+# Applied filters:
+Step_1: all peptides having "Acetyl" => pep_var_mod
+Step_2: unique peptides having highest pep score => pep_seq/pep_score
+Step_3: only keep rank 1 peptides => pep_rank
+Step_4: three tables based on p value => pep_expect
+Step_5: scoring => pep_score (with count and rank product and penalized rp)
+
+# Isolate the peptides that are acetyled (pep_var_mod). 
+# Find only the peptides with rank = 1 (pep_rank)
+# Find the common (in one or more files) peptides for all replicates based on the peptide sequences (pep_seq). Get the peptide with the highest score for each replicate.
+# Filter is based on different identification probability (pep_expect). The cutoffs are 0.05, 0.5 and 10.
+
+# The uncharacterized (description field) proteins in the protein hits are replaced by the annotated from the uniprot proteome db.
+
+	Origin of the raw database file used:
+		- Database: downloaded from Uniprot in fasta format
+
+# The files 'joined' with the joined peptides for all replicates, have preserved all the information with two additional columns. The columns are the filename which is respective to the replicates, and the number of the replicates that each peptide was found.
+
+# The files 'rank product' is for sorting the peptides by significance (lowest RP means highest significance).
+# The + replicates are being sorted by descending the pep_score, while the - reps are being sorted by ascending the pep_score. This is done to get lowest (worst) rank for the peptides located in - replicates (penalty-like scoring). Each peptide found in a replicate could be found more than once, so I choose the rank of the hit with the highest pep_score. If a peptide is not found in a replicate means that it was highly impossible so it gets by default the lowest rank in the replicate.
+# In the result file you will see the pep_score (of the highest scored hit) filled in when a peptide exists in a replicate. The last column RP stands for the rank product, and is sorted descending (from the most to the less significant)
+# Added more penalty in the rank product. Multiply by 10 the ranks in the - reps. This penalty is not applied if a peptide is not found in a replicate, it just gets by default the lowest rank in the replicate.
+# Added a score that is the count of peptides' existence through replicates, counting only the existence on + reps.
+
+# Find if the acetyl modification on specific amino acids of the peptides is conserved through different species so as to identify the peptides that are more significant for investigation. Used the maf-like aligned seqs and fixed a translator to go from uniprot id to genename and then to refseq id 'NM_'. Note here that one genename can link to many refseq ids, so I find in which sequence (refseq id) of those linked to a genename, the peptide is contained.
+
+	Origin of the raw files used:
+		- MAF file: exported from UCSC > Tables (http://genome.ucsc.edu/cgi-bin/hgTables) > 
+			Group: Gene predictions
+			Track: Refseq genes
+			Table: Refgene
+			Identifiers: upload list with accnos
+			Output: CDS FASTA alignment from multiple alignment
+		- Translator file: exported from UCSC > Tables (http://genome.ucsc.edu/cgi-bin/hgTables) > 
+			Group: Gene predictions
+			Track: Refseq genes
+			Table: Refgene
+			Output: Selected fields from primary and related tables
+			Fields: hg19.refGene.name, hg19.kgXref.geneSymbol
+
+
