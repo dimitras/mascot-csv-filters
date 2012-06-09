@@ -11,10 +11,10 @@ Dir["/mnt/mascot/data/20120*"].each do |dir|
 			if filenames.include?(filename)
 				# system("cp /mnt/mascot/data/#{dirname}/#{filename}.dat /mnt/mascot/data/mascot_dats/#{filename}.dat") # too slow
 				list << "/mnt/mascot/data/#{dirname}/#{filename}.dat "
-				# tar -cf backup.tar /root /data /dnchost /drawings
-				# cat list.txt|xargs tar cf archive.tar
 			end
 		end
 	end
 end
-system("tar -cf /mnt/mascot/data/mascot_dats/dats.tar #{list}")
+# system("tar -czf /mnt/mascot/data/mascot_dats/dats.tgz #{list}")
+system("tar -cvzf /mnt/mascot/data/mascot_dats/dats.tgz #{list} &> /mnt/mascot/data/mascot_dats/dats.toc")
+
