@@ -32,6 +32,7 @@ class MAFBlock
 				letter_positions  << position + letter_position
 			end
 		end
+		# puts seq.to_s + "\t:\t" + letter.to_s + "\t:\t" + letter_positions.to_s
 		return letter_positions
 	end
 
