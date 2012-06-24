@@ -2,6 +2,9 @@
 
 # gia kathe peptide apo ta prota 50 > gia kathe highest score replicate > krata to modification k to protein > read the query from dat > feed it to assign / Picker > change mzxml in the picker, ignore lights > need the parent mass value from peptides section (qN_pN) > NEED TO pick up the peaks with the 3 highest intensities > peptide, protein, spectrum, parent mz, parent intensity, 3 mz:intensity pair with the highest intensities, yions
 
+# TODO : get parent mass + intensity from dat. Get correct mass values from dat to feed Pep. Run the 2 other cutoffs with ACE_PEPTIDES routine. Then run MS2_from_dat after getting the missing dat file.
+
+
 require 'rubygems'
 require 'fastercsv'
 require 'pep'
