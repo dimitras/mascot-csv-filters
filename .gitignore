@@ -1,8 +1,10 @@
 ## files to ignore
 */.DS_Store
 .DS_Store
+.gitignore
 
 ## directories to ignore
 */results/
 */data/
 */raw/
+*/BUP/
