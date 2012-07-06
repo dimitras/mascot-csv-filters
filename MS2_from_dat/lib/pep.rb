@@ -1,4 +1,6 @@
 require 'rubygems'
+
+# masses taken from the dat file
 MODS = {
   'K' => 45.029395,
   'S' => 45.029395,
@@ -11,63 +13,37 @@ MODS = {
 #   'T' => 42.010565
 # }
 
-AVGMASS = {
-  'A'  => 71.08 ,
-  'R'  => 156.19,
-  'N'  => 114.1 ,
-  'D'  => 115.09,
-  'C'  => 103.14,
-  'E'  => 129.12,
-  'Q'  => 128.13,
-  'G'  => 57.05 ,
-  'H'  => 137.14,
-  'I'  => 113.16,
-  'L'  => 113.16,
-  'K'  => 128.17,
-  'M'  => 131.19,
-  'F'  => 147.18,
-  'P'  => 97.12 ,
-  'S'  => 87.08 ,
-  'T'  => 101.1 ,
-  'U'  => 150.03,
-  'W'  => 186.21,
-  'Y'  => 163.18,
-  'V'  => 99.13 ,
-  "K*" => 128.17 + MODS['K'],
-  "S*" => 87.08  + MODS['S'],
-  "T*" => 101.1  + MODS['T']
-}
 MW = {
-  'A' => 71.03712 ,
-  'R' => 156.10112,
-  'N' => 114.04293,
-  'D' => 115.02695,
-  'C' => 103.00919,
-  'E' => 129.0426 ,
-  'Q' => 128.05858,
-  'G' => 57.02147 ,
-  'H' => 137.05891,
-  'I' => 113.08407,
-  'L' => 113.08407,
-  'K' => 128.09497,
-  'M' => 131.04049,
-  'F' => 147.06842,
-  'P' => 97.05277 ,
-  'S' => 87.03203 ,
-  'T' => 101.04768,
-  'U' => 150.95364,
-  'W' => 186.07932,
-  'Y' => 163.06333,
-  'V' => 99.06842,
-  "K*" => 128.09497 + MODS['K'],
-  "S*" => 87.03203 + MODS['S'],
-  "T*" => 101.04768 + MODS['T']
+  'A' => 71.037114 ,
+  'R' => 156.101111,
+  'N' => 114.042927,
+  'D' => 115.026943,
+  'C' => 160.030649,
+  'E' => 129.042593,
+  'Q' => 128.058578,
+  'G' => 57.021464 ,
+  'H' => 137.058912,
+  'I' => 113.084064,
+  'L' => 113.084064,
+  'K' => 128.094963,
+  'M' => 131.040485,
+  'F' => 147.068414,
+  'P' => 97.052764 ,
+  'S' => 87.032028 ,
+  'T' => 101.047679,
+  'U' => 150.953630,
+  'W' => 186.079313,
+  'Y' => 163.063329,
+  'V' => 99.068414,
+  "K*" => 128.094963 + MODS['K'],
+  "S*" => 87.032028 + MODS['S'],
+  "T*" => 101.047679 + MODS['T']
 }
 
-H = 1.00794
-OH = 17.00706
-H2O = 18.015
-NH3 = 17.0305
+H = 1.007825
+OH = 17.00274
+H2O = 18.010565
+NH3 = 17.026549
 
 
 class Pep
@@ -135,15 +111,19 @@ class Pep
     return ions
   end
 
+  # Assigns the ion table to a given mass spectrum, walking through the m/z and ion series arrays to assign the ions to a mass peaks, given a tolerance
+  # Returns a map of peaks that have ions assigned to them
+  # http://174.129.8.134/mascot/help/results_help.html#PEP
+  # example: http://174.129.8.134/mascot/cgi/peptide_view.pl?from=100&to=800&_label_all=0&file=..%2Fdata%2F20120323%2FF001507.dat&query=20052&hit=1&section=5&ave_thresh=38&_ignoreionsscorebelow=0&report=0&_sigthreshold=0.05&_msresflags=3138&_msresflags2=10&percolate=0&percolate_rt=0&tick1=100&tick_int=50&range=700&index=B4DHQ2&px=1
   def assign(mz,ions,tol=1.0)
     # ion is [idx,b,b++,b*,b0] or y 
     pkmap = Array.new(mz.length)
     i1 = i2 =  0
+    puts "KNOWN/MEASURED MZs: #{mz.join(',')} (LENGTH:  #{mz.length}), \n\nCALCULATED masses/yIONs: #{ions.join(', ')} (LENGTH: #{ions.length})\n\n"
     # traverse through ios series looking for matches
 
     while i1 < mz.length && i2 < ions.length
       # don't have a mass to look for. next ion
-      ## BIG BUG, will never pick up ++ daughter ions! Please fix 
       unless ions[i2][1]
         i2 += 1
         next
@@ -153,8 +133,10 @@ class Pep
       dff = mz[i1] - ions[i2][1]
       if dff > tol
         # mass is too large, get next ion
+        puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too large)"
         pkmap[i1] = x
         i2 += 1
+        puts "GOTO\ti2 = #{i2}"
         next
       elsif dff <  0 - tol
         # mass is too small for the + ion
@@ -172,15 +154,36 @@ class Pep
         end
         # mass is too small, advance
         pkmap[i1] = x
+        puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too small)"
         i1 += 1
+        i2 = 0
+        puts "GOTO\ti1 = #{i1}"
         next
       end
       # set the index
       x[0] = i2  + 1
       x[1] = ions[i2][1]
+      puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]}"
+#       if pkmap[i1 - 1][0] == x[0]
+#         puts 'here'
+# #         compare intensities and pick higher one
+# #         if other one is higher then
+#         if ints[i1 - 1] > ints[i1]
+#           pkmap[i1] = [nil]*5
+#         # else if this one is higher
+#         else
+#           pkmap[i1 - 1] = [nil]*5
+#           pkmap[i1] = x
+#           puts "#{pkmap[i1].inspect} \twith intensity: #{ints[i1]} "
+#         end
+#       end
       pkmap[i1] = x
       i1 += 1
+      i2 = 0
+      puts "PKMAP@#{i1}: #{pkmap[i1]}"
+      puts "GOTO\ti1 = #{i1},\ti2 = #{i2}"
     end
+    # puts "\n-- Finished assigning yions --\n\n"
     # recheck  spectra for ++ daughter ions
     i1 = i2 =  0
     while i1 < mz.length && i2 < ions.length
@@ -189,7 +192,6 @@ class Pep
         next
       end
       dff = mz[i1] - ions[i2][2]
-#       puts([dff,mz[i1],ions[i2][2]].join(", "))
       if dff > tol
         # mass is too large
         i2 += 1
@@ -197,9 +199,10 @@ class Pep
       elsif (dff.abs() <= tol )
         pkmap[i1][0] = i2+1
         pkmap[i1][2] = ions[i2][2]
-      end
+      end 
       i1 += 1
     end
+    puts "\n\nPKMAP:\t#{pkmap.join(', ')} \t(LENGTH: #{pkmap.length})\n\n"
     return pkmap
   end
 
@@ -209,130 +212,4 @@ class Pep
   def inspect
     @seq.join("")
   end
-end
-
-class MrmPicker
-  require 'fastercsv'
-  def self.mrm(pepindex,output_file="mrms.csv")
-    pepindex = FasterCSV.read(pepindex,:headers=>true)
-    xmls = {}
-    # headers
-    count = 0
-    FasterCSV.open(output_file,'w') do |csv|
-      csv << %w{ accession prot_descr peptide mod_peptide spectrum_id charge ret_time_minutes precursor_mz precursor_int ms2_mz ms2_int y_intensity_rank y_index y_ion_seq y-1 y y+2 l_precursor_mz l_y-1 l_y l_y+2  }
-      pepindex.each do |r|
-        count += 1 
-        STDERR.puts count if count % 100 == 0 
-        mods = r['mods'].split(":").map {|m| m.to_i }
-        pep = Peptide.new(r["Gpeptide"],mods)
-        # create the light peptide, only taking out K,L mods
-        pep_light = Peptide.new(r["Gpeptide"],[])
-        mods.each do |mpos|
-          if pep_light.seq[mpos-1] == "C"
-            pep_light.seq[mpos-1] = "C*"
-          end
-        end
-        # puts pep,pep_light
-        mrmions = []
-        r['spectrum'] =~ /^(.+)\.(\d+)\.\d+\.(\d)$/
-        frac = $1
-        snum = $2.to_i
-        chrg = $3.to_i
-        unless(xmls[frac])
-          xmls[frac] = Rampy::RampFile.open("#{frac}.mzXML")
-        end
-        x = xmls[frac]
-        s = Rampy::Scan.new(x.scan(snum))
-        # first check if we have suitable Y ions for the MRM 
-        y = pep.assign(s.mz, pep.yions)
-        # while I am at it grab the light Y ions table
-        y_light = pep_light.yions
-        # grab the MRM transitions for the heavy ions
-        ranked_idx = [] 
-        # grab legitimate y ions and rank them in intensity desc
-        idxset = []
-        yset = []
-        mzset = []
-        intset=[]
-        y.each_index do |i|
-          if y[i] && y[i][0] && !y[i][1].nil? && y[i][1] > 0
-            idxset.push(i)
-            yset.push(y[i][0])
-            mzset.push(s.mz[i])
-            intset.push(s.i[i])
-          end
-        end
-        intset.each do 
-          maxi = intset.index(intset.max())
-          ranked_idx.push( idxset[maxi] )
-          intset[maxi] = 0
-        end
-        # puts r['Gpeptide']
-        # puts "HEAVY"
-        # pep.yions.map{|ylion| puts ylion.join(", ")}
-        # puts "LIGHT"
-        # y_light.map{|ylion| puts ylion.join(", ")}
-
-        ranked_idx.each_with_index do |i,ii|
-          if(  y[i] &&
-               !y[i][0].nil? && 1
-               y[i][0] > 0  )
-            yidx = y[i][0] - 1
-            # puts pep.yions[yidx].join(", ")
-            # puts y_light[yidx].join(", ")
-            csv <<  [ r['Gprotein'],
-              r["Gprotein_description"],
-              r['Gpeptide'],
-              pep.to_s,
-              r['spectrum'], 
-              r['charge'],
-              r['ret_time_sec'].to_f / 60 ,
-              r['ms1_mz'],
-              r['ms1_int'],
-              s.mz[i],
-              s.i[i],
-              ii, # the mz intensity rank
-              y[i][0],
-              pep.yions[yidx][0], # y ion sequence
-              y[i][1] - H ,
-              y[i][1],
-              y[i][1] + (H * 2),
-              pep_light.mw(2) / 2,
-              y_light[yidx][1] - H,
-              y_light[yidx][1],
-              y_light[yidx][1] + (H * 2) 
-              ]
-          end # end if
-        end # end each_with_index
-      end # end pepindex.each
-    end
-  end
-end
-class Plotter
-  # require 'gnuplot'
-  def self.plot(pep,mz,inten,fn)
-    o = File.open(fn,'w')
-    b = pep.assign(mz,pep.bions)
-    y = pep.assign(mz,pep.yions)
-    o.puts(%w{ mz inten b_idx b bb bn b0 y_idx y yy yn y0}.join(","))
-    mz.each_index do |i|
-      o.puts([mz[i],inten[i],b[i],y[i]].join(","))
-    end
-  end
-end
-
-if __FILE__ == $0 
-  require 'yaml'
-  require 'rampy'
-  # puts p = Peptide.new("VFQQVAQASK",[10])
-  puts p = Peptide.new("AITGFDDPFSGK",[12])
-  puts p.yions.map {|e| e.join ", "}
-  r = Rampy::RampFile.open("END2334A6MS2-40-15007.mzXML")
-  s = r.get_peaks(r.scan(5554))
-  Plotter.plot(p,s[0],s[1],'plotdata_desmo.csv')
-  # r = Rampy::RampFile.open("SCX-A3.mzXML")
-  # s =  r.get_peaks(r.scan(2952))
-  # Plotter.plot(p,s[0],s[1],'plotdata.csv')
-  # test mpicker 
-  # MPicker.mrm("combined.csv","mrms.csv")
 end
