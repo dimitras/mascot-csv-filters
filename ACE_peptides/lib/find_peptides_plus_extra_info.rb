@@ -12,8 +12,8 @@ require 'maf_like_parser'
 require 'accno_to_refseq_translator'
 
 # DO NOT FORGET to define which is the folder of your data, if 3H or En changes check: if set.include? '3H' and also the regular expression for Acetyl in the new kind of dataset
-set = "3H_ACE_with_pipes"
-# set = "En_ACE_with_pipes"
+# set = "3H_ACE_with_pipes"
+set = "En_ACE_with_pipes"
 
 cutoff = ARGV[0].to_f
 proteome_db_fasta_file = ARGV[1]
@@ -141,44 +141,52 @@ filenames.sort { |a,b| a[1] <=> b[1] }.each do |filename,fileid|
 	filenames_arr << filename
 	filenames_str = filenames_arr.join(",")
 end
-peps_sorted_by_rank_product_out.puts "QUERY, PROT_ACC, PROT_DESC, GENENAME, PEPTIDE, #{filenames_str}, SCORE, RP, PENALIZED RP, #{species_ids_str}, PEP_OBSERVED_MASS, PEP_CALC_MASS, PEP_DELTA"
+peps_sorted_by_rank_product_out.puts "QUERY, PROT_ACC, PROT_DESC, GENENAME, PEPTIDE, #{filenames_str}, SCORE, RP, PENALIZED RP, #{species_ids_str}, PEP_OBSERVED_MASS, PEP_CALC_MASS, PEP_DELTA, CUTOFF, MODIFICATION, MOD_POS_STR"
 pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 	protein_acc = nil
 	pep_observed_mass = nil
 	pep_calc_mass = nil
 	pep_delta = nil
+	pep_cutoff = nil
 	description = nil
 	genename = nil
 	query = nil
-	letters = {}
 	highest_score = 0
+	letters = {}
+	modification = {}
+	mod_positions_str = nil
 	infile_list.each_value do |csvp|
 		if csvp.has_peptide(peptide)
 			highest_scored_hit = csvp.highest_scored_hit_for_pep(peptide)
-			uncharacterized_to_annotated(highest_scored_hit)
-			protein_acc = highest_scored_hit.prot_acc.to_s
-			pep_observed_mass = highest_scored_hit.pep_exp_mr.to_s
-			pep_calc_mass = highest_scored_hit.pep_calc_mr.to_s
-			pep_delta = highest_scored_hit.pep_delta.to_s
-			description = highest_scored_hit.prot_desc.to_s
-			if description.include? "GN="
-				genename = description.split("GN=")[1].split(" ")[0].to_s
-			else 
-				genename = 'NA'
-			end
-			if set.include? '3H'
-				highest_scored_hit.pep_var_mod.scan(/Acetyl:.+\(\d\)\s\((\w)\)/).each do |i|  # Acetyl:2H(3) (K); 2 Acetyl:2H(3) (S)
-					letters[$1] = nil
-				end
-			elsif set.include? 'En'
-				highest_scored_hit.pep_var_mod.scan(/Acetyl\s\((\w)\)/).each do |i|  # Acetyl (K)
-					letters[$1] = nil
-				end
-			end
 			if highest_scored_hit.pep_score > highest_score
-				query = highest_scored_hit.pep_query.to_s
 				highest_score = highest_scored_hit.pep_score
+				uncharacterized_to_annotated(highest_scored_hit)
+				protein_acc = highest_scored_hit.prot_acc.to_s
+				pep_observed_mass = highest_scored_hit.pep_exp_mr.to_s
+				pep_calc_mass = highest_scored_hit.pep_calc_mr.to_s
+				pep_delta = highest_scored_hit.pep_delta.to_s
+				pep_cutoff = highest_scored_hit.pep_expect.to_s
+				query = highest_scored_hit.pep_query.to_s
+				description = highest_scored_hit.prot_desc.to_s
+				modification = highest_scored_hit.pep_var_mod.to_s
+				mod_positions_str = highest_scored_hit.pep_var_mod_pos.split('.')[1].to_s
+				puts peptide + mod_positions_str
+				if description.include? "GN="
+					genename = description.split("GN=")[1].split(" ")[0].to_s
+				else 
+					genename = 'NA'
+				end
+				if set.include? '3H'
+					highest_scored_hit.pep_var_mod.scan(/Acetyl:.+\(\d\)\s\((\w)\)/).each do |i|  # Acetyl:2H(3) (K); 2 Acetyl:2H(3) (S)
+						letters[$1] = nil
+					end
+				elsif set.include? 'En'
+					highest_scored_hit.pep_var_mod.scan(/Acetyl\s\((\w)\)/).each do |i|  # Acetyl (K)
+						letters[$1] = nil
+					end
+				end
 			end
+			puts highest_score.to_s + ' > ' + peptide.to_s + ' > ' + modification
 		end
 	end
 	refseq = nil
@@ -212,7 +220,7 @@ pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 		letters_in_conserved_positions_in_all_species << letters_in_conserved_positions.join(",")
 	end
 
-	peps_sorted_by_rank_product_out.puts '"' + query + '","' + protein_acc + '","' + description + '","' + genename + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + pep_existance_counts[peptide].to_s + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '","' + (pep_penalized_rp[peptide]**(1/infile_list.length.to_f)).to_s + '","' + letters_in_conserved_positions_in_all_species.join('","') + '","' + pep_observed_mass + '","' + pep_calc_mass + '","' + pep_delta + '"'
+	peps_sorted_by_rank_product_out.puts '"' + query + '","' + protein_acc + '","' + description + '","' + genename + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + pep_existance_counts[peptide].to_s + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '","' + (pep_penalized_rp[peptide]**(1/infile_list.length.to_f)).to_s + '","' + letters_in_conserved_positions_in_all_species.join('","') + '","' + pep_observed_mass + '","' + pep_calc_mass + '","' + pep_delta + '","' + pep_cutoff + '","' + modification + '","' + mod_positions_str + '"'
 end
 peps_sorted_by_rank_product_out.close
 

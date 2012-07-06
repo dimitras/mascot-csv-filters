@@ -57,7 +57,7 @@ def uncharacterized_to_annotated(protein_hit)
 	end
 end
 
-		
+
 # count total peptide hits in all replicates
 total_peptide_hits = {}
 infile_list.each_value do |csvp|
@@ -110,7 +110,7 @@ total_peptide_hits.each_key do |peptide|
 			if csvp.is_ascending
 				pep_penalized_rp[peptide] *= 10
 			end
-				
+
 		end
 	end
 end
@@ -209,4 +209,3 @@ pep_penalized_rp.sort_by{|peptide,rp| rp}.each do |peptide,rp|
 	peps_sorted_by_rank_product_out.puts '"' + query + '","' + protein_acc + '","' + description + '","' + genename + '","' + peptide.to_s + '","' + pep_scores[peptide].join('","') + '","' + pep_existance_counts[peptide].to_s + '","' + (pep_rank_product[peptide]**(1/infile_list.length.to_f)).to_s + '","' + (pep_penalized_rp[peptide]**(1/infile_list.length.to_f)).to_s + '","' + letters_in_conserved_positions_in_all_species.join('","') + '"'
 end
 peps_sorted_by_rank_product_out.close
-
