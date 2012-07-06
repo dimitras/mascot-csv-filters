@@ -156,7 +156,7 @@ class Pep
         pkmap[i1] = x
         puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too small)"
         i1 += 1
-        i2 = 0
+        # i2 = 0
         puts "GOTO\ti1 = #{i1}"
         next
       end
@@ -179,7 +179,7 @@ class Pep
 #       end
       pkmap[i1] = x
       i1 += 1
-      i2 = 0
+      # i2 = 0
       puts "PKMAP@#{i1}: #{pkmap[i1]}"
       puts "GOTO\ti1 = #{i1},\ti2 = #{i2}"
     end
