@@ -14,8 +14,8 @@ end
 csvfile = ARGV[0]
 outfile = ARGV[1]
 # REMEMBER TO uncomment the correct dataset (foldername)
-foldername = '../data/3H_Ace/'
-# foldername = '../data/Endogenous_Ace/'
+# foldername = '../data/3H_Ace/'
+foldername = '../data/Endogenous_Ace/'
 fieldnames = []
 replicate_names = []
 line_counter = 0
@@ -74,20 +74,26 @@ FasterCSV.open(outfile,'w') do |csv|
 				highest_score = scores.max
 				highest_score_index = scores.index(highest_score)
 				repl_with_highest_score = replicate_names[highest_score_index].split("_")[1].to_s
-				puts "~~~~~~ #{repl_with_highest_score} > #{query_no} > #{peptide} > #{highest_score} ~~~~~~~~~~"
+				puts "#{repl_with_highest_score} > #{query_no} > #{peptide} > #{highest_score}"
 
 				# take the ions table from dat file
 				filename = foldername + 'dats/' + repl_with_highest_score +  '.dat'
-				# puts 'Working for ' + filename
+				puts 'Working for ' + filename
 				dat = Mascot::DAT.open(filename, true)
 				spectrum_hash = dat.query(query_no)
 				title = spectrum_hash['title'.to_sym]
 				charge = spectrum_hash['charge'.to_sym]
 				rtinseconds = spectrum_hash['rtinseconds'.to_sym]
 				ions1 = spectrum_hash['peaks'.to_sym]
-				mzs = ions1[0]
-				intensities = ions1[1]
+				mzs = []
+				intensities = []
+				for i in 0..ions1.length-1
+				   mzs << ions1[i][0].to_f
+				   intensities << ions1[i][1].to_f
+				end
+				puts "Spectra\n#{ions1.join(' - ')}\n\n"
 # 				puts "Intensities: #{intensities.join(',')} \n\n" #.sort {|x,y| y <=> x }
+				puts mod_positions.join(',')
 				pep = Pep.new(peptide, mod_positions)
 				y = pep.assign(mzs, pep.yions)
 				ranked_idx = []
@@ -98,31 +104,20 @@ FasterCSV.open(outfile,'w') do |csv|
 				intset=[]
 				y.each_index do |i|
 					if y[i] && y[i][0] && !y[i][1].nil? && y[i][1] > 0
-						# puts "yions: #{y[i][0]}, #{y[i][1]},\tm/z: #{mzs[i]}"
+						puts "yions: #{y[i][0]}, #{y[i][1]},\tm/z: #{mzs[i]}"
 						idxset.push(i)
 						yset.push(y[i][0])
 						mzset.push(mzs[i])
 						intset.push(intensities[i])
 					end
 				end
-				if query_no == 151595
-					puts '#################################'
-					puts y.inspect
-					puts '#################################'
-					# puts idxset.inspect
-					# puts yset.inspect
-					# puts mzset.inspect
-					# puts intset.inspect
-				end
-				# puts 'MZs: ' + mzset.join(', ')
-				# puts 'INTs: ' + intset.join(', ')
 				intset.each do
 					maxi = intset.index(intset.max())
-					# puts 'MAXI: ' + maxi.to_s + ' > ' + idxset[maxi].to_s
+					puts 'MAXI: ' + maxi.to_s + ' > ' + idxset[maxi].to_s
 					ranked_idx.push( idxset[maxi] )
 					intset[maxi] = 0
 				end
-				# puts 'Ranked index: ' + ranked_idx.join(', ')
+				puts 'Ranked index: ' + ranked_idx.join(', ')
 
 				ranked_idx.each_with_index do |i,ii|
 					if( y[i] &&

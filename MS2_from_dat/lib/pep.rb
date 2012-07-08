@@ -1,18 +1,20 @@
 require 'rubygems'
 
-# masses taken from the dat file
-MODS = {
-  'K' => 45.029395,
-  'S' => 45.029395,
-  'T' => 45.029395
-}
-# for non modified
+# REMEMBER TO uncomment the correct modifications (MODS)
+# for 3H acetylation
 # MODS = {
-#   'K' => 42.010565,
-#   'S' => 42.010565,
-#   'T' => 42.010565
+#   'K' => 45.029395,
+#   'S' => 45.029395,
+#   'T' => 45.029395
 # }
+# for endogenous
+MODS = {
+  'K' => 42.010565,
+  'S' => 42.010565,
+  'T' => 42.010565
+}
 
+# masses taken from the dat file
 MW = {
   'A' => 71.037114 ,
   'R' => 156.101111,
@@ -44,7 +46,6 @@ H = 1.007825
 OH = 17.00274
 H2O = 18.010565
 NH3 = 17.026549
-
 
 class Pep
   def initialize(seq,mods=[])
@@ -119,7 +120,7 @@ class Pep
     # ion is [idx,b,b++,b*,b0] or y 
     pkmap = Array.new(mz.length)
     i1 = i2 =  0
-    puts "KNOWN/MEASURED MZs: #{mz.join(',')} (LENGTH:  #{mz.length}), \n\nCALCULATED masses/yIONs: #{ions.join(', ')} (LENGTH: #{ions.length})\n\n"
+    puts "CALCULATED masses/yIONs: #{ions.join(', ')} (LENGTH: #{ions.length})\n\n"
     # traverse through ios series looking for matches
 
     while i1 < mz.length && i2 < ions.length
@@ -178,9 +179,9 @@ class Pep
 #         end
 #       end
       pkmap[i1] = x
+      puts "PKMAP@#{i1}: #{pkmap[i1].inspect}"
       i1 += 1
       # i2 = 0
-      puts "PKMAP@#{i1}: #{pkmap[i1]}"
       puts "GOTO\ti1 = #{i1},\ti2 = #{i2}"
     end
     # puts "\n-- Finished assigning yions --\n\n"
