@@ -1,7 +1,5 @@
 # USAGE: ruby runner.rb ../data/peptides/peps_by_rank_product_005_cutoff.csv ../results/transitions_005.csv
 
-# TODO : Run the 2 other cutoffs with ACE_PEPTIDES routine. Then run MS2_from_dat after getting the missing dat file.
-
 require 'rubygems'
 require 'fastercsv'
 require 'pep'
@@ -22,7 +20,7 @@ line_counter = 0
 modification = []
 mod_positions = []
 mod_positions_str = nil
-spectrum_hash = {}
+spectrum = {}
 FasterCSV.open(outfile,'w') do |csv|
 	csv << %w{ QUERY_NUM REPLICATE PROT_ACCESSION PROT_DESCRIPTION PEPTIDE MODIFICATION MOD_PEPTIDE SPECTRUM_ID CHARGE RET_TIME_MINS HIGHEST_SCORE CUTOFF PARENT_MZ PEP_CALC_MASS PEP_DELTA MS2_MZ MS2_INT y_INT_RANK y_INDEX y_ION_SEQ y-1 y y+2 }
 	FasterCSV.foreach(csvfile) do |row|
@@ -78,22 +76,21 @@ FasterCSV.open(outfile,'w') do |csv|
 
 				# take the ions table from dat file
 				filename = foldername + 'dats/' + repl_with_highest_score +  '.dat'
-				puts 'Working for ' + filename
 				dat = Mascot::DAT.open(filename, true)
-				spectrum_hash = dat.query(query_no)
-				title = spectrum_hash['title'.to_sym]
-				charge = spectrum_hash['charge'.to_sym]
-				rtinseconds = spectrum_hash['rtinseconds'.to_sym]
-				ions1 = spectrum_hash['peaks'.to_sym]
-				mzs = []
-				intensities = []
-				for i in 0..ions1.length-1
-				   mzs << ions1[i][0].to_f
-				   intensities << ions1[i][1].to_f
-				end
-				puts "Spectra\n#{ions1.join(' - ')}\n\n"
-# 				puts "Intensities: #{intensities.join(',')} \n\n" #.sort {|x,y| y <=> x }
-				puts mod_positions.join(',')
+				spectrum = dat.query(query_no)
+				title = spectrum.title
+				charge = spectrum.charge
+				rtinseconds = spectrum.rtinseconds
+				puts rtinseconds
+				ions1 = spectrum.peaks
+				mzs = spectrum.mz
+				intensities = spectrum.intensity
+				# mzs = []
+				# intensities = []
+				# for i in 0..ions1.length-1
+				#    mzs << ions1[i][0].to_f
+				#    intensities << ions1[i][1].to_f
+				# end
 				pep = Pep.new(peptide, mod_positions)
 				y = pep.assign(mzs, pep.yions)
 				ranked_idx = []
@@ -104,7 +101,6 @@ FasterCSV.open(outfile,'w') do |csv|
 				intset=[]
 				y.each_index do |i|
 					if y[i] && y[i][0] && !y[i][1].nil? && y[i][1] > 0
-						puts "yions: #{y[i][0]}, #{y[i][1]},\tm/z: #{mzs[i]}"
 						idxset.push(i)
 						yset.push(y[i][0])
 						mzset.push(mzs[i])
@@ -113,11 +109,9 @@ FasterCSV.open(outfile,'w') do |csv|
 				end
 				intset.each do
 					maxi = intset.index(intset.max())
-					puts 'MAXI: ' + maxi.to_s + ' > ' + idxset[maxi].to_s
 					ranked_idx.push( idxset[maxi] )
 					intset[maxi] = 0
 				end
-				puts 'Ranked index: ' + ranked_idx.join(', ')
 
 				ranked_idx.each_with_index do |i,ii|
 					if( y[i] &&

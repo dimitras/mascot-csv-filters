@@ -120,7 +120,6 @@ class Pep
     # ion is [idx,b,b++,b*,b0] or y 
     pkmap = Array.new(mz.length)
     i1 = i2 =  0
-    puts "CALCULATED masses/yIONs: #{ions.join(', ')} (LENGTH: #{ions.length})\n\n"
     # traverse through ios series looking for matches
 
     while i1 < mz.length && i2 < ions.length
@@ -134,10 +133,10 @@ class Pep
       dff = mz[i1] - ions[i2][1]
       if dff > tol
         # mass is too large, get next ion
-        puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too large)"
+        # puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too large)"
         pkmap[i1] = x
         i2 += 1
-        puts "GOTO\ti2 = #{i2}"
+        # puts "GOTO\ti2 = #{i2}"
         next
       elsif dff <  0 - tol
         # mass is too small for the + ion
@@ -155,16 +154,16 @@ class Pep
         end
         # mass is too small, advance
         pkmap[i1] = x
-        puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too small)"
+        # puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]} (mass too small)"
         i1 += 1
         # i2 = 0
-        puts "GOTO\ti1 = #{i1}"
+        # puts "GOTO\ti1 = #{i1}"
         next
       end
       # set the index
       x[0] = i2  + 1
       x[1] = ions[i2][1]
-      puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]}"
+      # puts "ION:\ti1 = #{i1} , i2 = #{i2} => with mass diff: #{mz[i1]} - #{ions[i2][1]}"
 #       if pkmap[i1 - 1][0] == x[0]
 #         puts 'here'
 # #         compare intensities and pick higher one
@@ -179,10 +178,10 @@ class Pep
 #         end
 #       end
       pkmap[i1] = x
-      puts "PKMAP@#{i1}: #{pkmap[i1].inspect}"
+      # puts "PKMAP@#{i1}: #{pkmap[i1].inspect}"
       i1 += 1
       # i2 = 0
-      puts "GOTO\ti1 = #{i1},\ti2 = #{i2}"
+      # puts "GOTO\ti1 = #{i1},\ti2 = #{i2}"
     end
     # puts "\n-- Finished assigning yions --\n\n"
     # recheck  spectra for ++ daughter ions
@@ -203,7 +202,7 @@ class Pep
       end 
       i1 += 1
     end
-    puts "\n\nPKMAP:\t#{pkmap.join(', ')} \t(LENGTH: #{pkmap.length})\n\n"
+    # puts "\n\nPKMAP:\t#{pkmap.join(', ')} \t(LENGTH: #{pkmap.length})\n\n"
     return pkmap
   end
 
