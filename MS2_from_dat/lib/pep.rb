@@ -2,17 +2,17 @@ require 'rubygems'
 
 # REMEMBER TO uncomment the correct modifications (MODS)
 # for 3H acetylation
-# MODS = {
-#   'K' => 45.029395,
-#   'S' => 45.029395,
-#   'T' => 45.029395
-# }
-# for endogenous
 MODS = {
-  'K' => 42.010565,
-  'S' => 42.010565,
-  'T' => 42.010565
+  'K' => 45.029395,
+  'S' => 45.029395,
+  'T' => 45.029395
 }
+# for endogenous
+# MODS = {
+#   'K' => 42.010565,
+#   'S' => 42.010565,
+#   'T' => 42.010565
+# }
 
 # masses taken from the dat file
 MW = {
@@ -73,8 +73,10 @@ class Pep
         y  = calc_ion_mz_table(tmp,false)
         @yions.unshift(y)
       end
+      # puts @seq[i].to_s + "\t" + idx.to_s + "\t" + (@seq.length - i).to_s + "\t" + b.join('-') + "\t" + y.join('-')
       @iontable<<[@seq[i], idx, @seq.length - i , b, y]
     end
+    # puts "iontable: #{@iontable.join(' - ')}"
   end
   attr_accessor :iontable, :bions, :yions, :seq
 
@@ -213,3 +215,4 @@ class Pep
     @seq.join("")
   end
 end
+

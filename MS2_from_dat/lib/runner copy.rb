@@ -4,16 +4,13 @@ require 'rubygems'
 require 'fastercsv'
 require 'pep'
 require 'mascot/dat'
-require 'gnuplot'
 
 csvfile = ARGV[0]
 outfile = ARGV[1]
-ionstables_file = ARGV[2]
+plotfile = ARGV[2]
 # REMEMBER TO uncomment the correct dataset (foldername)
 foldername = '../data/3H_Ace/'
 # foldername = '../data/Endogenous_Ace/'
-resultsfolder = '../results/3H_Ace/'
-# resultsfolder = '../results/Endogenous_Ace/'
 fieldnames = []
 replicate_names = []
 line_counter = 0
@@ -21,49 +18,55 @@ modification = []
 mod_positions = []
 mod_positions_str = nil
 spectrum = {}
-itf = File.open(ionstables_file,'w')
 
-# plot the spectra
-def gplot(peptide, title, assigned_ions, mzs, intensities, figure_filename)
-	Gnuplot.open do |gp|
-		Gnuplot::Plot.new( gp ) do |plot|
-			plot.output figure_filename
-			plot.terminal 'svg'
-			plot.title  "Query title:#{title} of #{peptide}"
-			plot.ylabel 'intensity'
-			plot.xlabel 'm/z'
-			x_vals = assigned_ions.collect{|mass| mass.first}
-			y_vals = assigned_ions.collect{|arr| arr[1]}
-			l_vals = assigned_ions.collect{|idx| idx[2]}
-			
-			plot.data << Gnuplot::DataSet.new( [mzs, intensities] ) do |ds|
-				ds.with = 'impulses linecolor rgb "blue"'
-				ds.linewidth = 1
-				ds.notitle
-			end
-			
-			plot.data << Gnuplot::DataSet.new( [x_vals, y_vals] ) do |ds|
-				ds.with = 'impulses linecolor rgb "red"'
-				ds.linewidth = 1.5
-				ds.notitle
-			end
+# def find_modification_positions_in_peptide(pep, modification)
+#     return (0 .. pep.length - 1).find_all { |i| pep[(i-1), 1] == modification }
+# end
 
-			max_y_val = y_vals.max
-			label_y_vals = y_vals.map{|value| value + max_y_val*0.05}
-			plot.data << Gnuplot::DataSet.new( [x_vals, label_y_vals, l_vals] ) do |ds|
-				ds.with = 'labels textcolor lt 1 rotate left'
-				ds.notitle
-			end
+# def plot_table(mzs, intensities, y, pf)
+# 	fn = File.open(pf,'w')
+# 	fn.puts(%w{ mzs intensities y_idx y yy yn y0}.join(","))
+#     mzs.each_index do |i|
+#       fn.puts([mzs[i],intensities[i],y[i]].join(","))
+#     end
+#     fn.close
+# end
+
+def plot_table(mz, intensity, y, pf, ranked_idx)
+	File.open(pf,'w') do |row|
+		row << %w{ mzs intensities y_idx y yy yn y0}.join(",")
+		ranked_idx.each_with_index do |i,ii|
+		    row << [mz,intensity,y].join(",") + "\n"
 		end
 	end
 end
+
+def peptide(peptide, mod_positions)
+	return Pep.new(peptide, mod_positions)
+end
+
+def yions(mzs, pep)
+	return pep.assign(mzs, pep.yions)
+end
+
+def bions(mzs, pep)
+	return pep.assign(mzs, pep.bions)
+end
+
+def max_int(intset, idxset, ranked_idx)
+	intset.each do
+		maxi = intset.index(intset.max())
+		ranked_idx.push( idxset[maxi] )
+		intset[maxi] = 0
+	end
+end
+
 
 FasterCSV.open(outfile,'w') do |csv|
 	csv << %w{ QUERY_NUM REPLICATE PROT_ACCESSION PROT_DESCRIPTION PEPTIDE MODIFICATION MOD_PEPTIDE SPECTRUM_ID CHARGE RET_TIME_MINS HIGHEST_SCORE CUTOFF PARENT_MZ PEP_CALC_MASS PEP_DELTA MS2_MZ MS2_INT y_INT_RANK y_INDEX y_ION_SEQ y-1 y y+2 }
 	FasterCSV.foreach(csvfile) do |row|
 		line_counter += 1
-		assigned_ions = Array.new()
-		if line_counter <= 51 # for our purposes we need the first 50 peptides in the list
+		if line_counter <= 51
 			if fieldnames.empty?
 				fieldnames = row
 				replicate_names = row[5..16]
@@ -79,7 +82,7 @@ FasterCSV.open(outfile,'w') do |csv|
 					#get modification positions from string
 					mod_positions_str = row[33].split('')
 					mod_positions.clear
-					mod_positions_str.each_index do |i|
+					mod_positions_str.each_index do |i|	
 						if !mod_positions_str[i].include?('0') && modification.include?(peptide.split('')[i])
 							mod_positions << i + 1 #1-based
 						end
@@ -91,13 +94,13 @@ FasterCSV.open(outfile,'w') do |csv|
 					# get modification positions from string
 					mod_positions_str = row[33].split('')
 					mod_positions.clear
-					mod_positions_str.each_index do |i|
+					mod_positions_str.each_index do |i|	
 						if !mod_positions_str[i].include?('0') && modification.include?(peptide.split('')[i])
 							mod_positions << i + 1 #1-based
 						end
 					end
 				end
-
+				
 				query_no = row[0].to_i
 				parent_mass = row[28].to_s
 				calc_mass = row[29].to_s
@@ -122,9 +125,8 @@ FasterCSV.open(outfile,'w') do |csv|
 				ions1 = spectrum.peaks
 				mzs = spectrum.mz
 				intensities = spectrum.intensity
-
-				pep = Pep.new(peptide, mod_positions)
-				y = pep.assign(mzs, pep.yions)
+				pep = peptide(peptide, mod_positions)
+				y = yions(mzs, pep)
 				ranked_idx = []
 				# grab legitimate y ions and rank them in intensity desc
 				idxset = []
@@ -139,18 +141,19 @@ FasterCSV.open(outfile,'w') do |csv|
 						intset.push(intensities[i])
 					end
 				end
-				intset.each do
-					maxi = intset.index(intset.max())
-					ranked_idx.push( idxset[maxi] )
-					intset[maxi] = 0
-				end
+
+				max_int(intset, idxset, ranked_idx)
+				puts ranked_idx.inspect
+				plot_table(mzs[i], intensities[i], y, "../results/" + query_no.to_s + "_" + plotfile.split('/')[2].to_s, ranked_idx)
+
 				ranked_idx.each_with_index do |i,ii|
 					if( y[i] &&
 						!y[i][0].nil? && 1
-						y[i][0] > 0 && ii < 3 )
+						y[i][0] > 0 && 
+						ii < 3 )
 						yidx = y[i][0] - 1
-						csv <<  [query_no,
-						repl_with_highest_score,
+						csv <<  [query_no, 
+						repl_with_highest_score,	
 						highest_scored_protein_accno,
 						highest_scored_protein_desc,
 						peptide,
@@ -169,55 +172,14 @@ FasterCSV.open(outfile,'w') do |csv|
 						ii, # the mz intensity rank
 						y[i][0],
 						pep.yions[yidx][0], # y ion sequence
-						y[i][1] - H ,
+						y[i][1] - H,
 						y[i][1],
 						y[i][1] + (H * 2)
 						]
 					end
 				end
-
-				# get the peaks of all assigned yions table (with mass-intensity pairs)
-				assigned_ions = Array.new
-				unassigned_ions = Array.new
-				assigned_ions_hash = {}
-				all_labels = []
-				ranked_idx.each_with_index do |i,ii|
-					if( y[i] && !y[i][0].nil? && 1
-						y[i][0] > 0 )
-						assigned_ions << Array.new
-						if all_labels.include? "y(#{y[i][0]})"
-							next
-						end
-						assigned_ions << [y[i][1],intensities[i],"y(#{y[i][0]})"]
-						all_labels << "y(#{y[i][0]})"
-						assigned_ions_hash[intensities[i]] = "y(#{y[i][0]})"
-					end
-				end
-				assigned_ions.reject! { |c| c.empty? }
-
-
-				# get all ions (mass-intensity-index) and the label(index) for the assigned ones
-				itf.puts "#{repl_with_highest_score}, #{query_no}, #{peptide}"
-				itf.puts(%w{ mass intensity y-index }.join(","))
-				for i in 0..mzs.length-1
-					if assigned_ions_hash.has_key?(intensities[i].to_f)
-						itf.puts [mzs[i], intensities[i], "y(#{y[i][0]})"].join(',')
-					else
-						itf.puts [mzs[i], intensities[i], ''].join(',')
-					end
-				end
-
-
-				# plot the spectra
-				figure_filename = "#{resultsfolder}/figures/figure_#{repl_with_highest_score}_#{query_no}_#{peptide}.svg"
-				gplot(peptide, title, assigned_ions, mzs, intensities, figure_filename)
-
-# 				# get the ions table - full extra
-# 				itf.puts(%w{ aa b-idx y-idx bion b b++ NA b0 yion y y++ NA y0 }.join(","))
-# 				itf.puts pep.iontable.collect {|x| x.join(',')}
-				
-
 			end
 		end
 	end
 end
+
