@@ -1,4 +1,5 @@
-# USAGE: ruby runner.rb ../data/peptides/peps_by_rank_product_005_cutoff.csv ../results/transitions_005.csv
+# USAGE: ruby runner.rb peps_by_rank_product_005_cutoff.csv transitions_005.csv ionstables_005.csv
+# ruby runner.rb peps_by_rank_product_005_cutoff.csv transitions_005.csv ionstables_005.csv
 
 require 'rubygems'
 require 'fastercsv'
@@ -10,10 +11,10 @@ csvfile = ARGV[0]
 outfile = ARGV[1]
 ionstables_file = ARGV[2]
 # REMEMBER TO uncomment the correct dataset (foldername)
-foldername = '../data/3H_Ace/'
-# foldername = '../data/Endogenous_Ace/'
-resultsfolder = '../results/3H_Ace/'
-# resultsfolder = '../results/Endogenous_Ace/'
+# foldername = '../data/3H_Ace/'
+foldername = '../data/Endogenous_Ace/'
+# resultsfolder = '../results/3H_Ace/'
+resultsfolder = '../results/Endogenous_Ace/'
 fieldnames = []
 replicate_names = []
 line_counter = 0
@@ -21,7 +22,7 @@ modification = []
 mod_positions = []
 mod_positions_str = nil
 spectrum = {}
-itf = File.open(ionstables_file,'w')
+itf = File.open(resultsfolder + 'ionstables/' + ionstables_file,'w')
 
 # plot the spectra
 def gplot(peptide, title, assigned_ions, mzs, intensities, figure_filename)
@@ -58,12 +59,12 @@ def gplot(peptide, title, assigned_ions, mzs, intensities, figure_filename)
 	end
 end
 
-FasterCSV.open(outfile,'w') do |csv|
+FasterCSV.open(resultsfolder + outfile,'w') do |csv|
 	csv << %w{ QUERY_NUM REPLICATE PROT_ACCESSION PROT_DESCRIPTION PEPTIDE MODIFICATION MOD_PEPTIDE SPECTRUM_ID CHARGE RET_TIME_MINS HIGHEST_SCORE CUTOFF PARENT_MZ PEP_CALC_MASS PEP_DELTA MS2_MZ MS2_INT y_INT_RANK y_INDEX y_ION_SEQ y-1 y y+2 }
-	FasterCSV.foreach(csvfile) do |row|
+	FasterCSV.foreach(foldername + csvfile) do |row|
 		line_counter += 1
 		assigned_ions = Array.new()
-		if line_counter <= 51 # for our purposes we need the first 50 peptides in the list
+		if true || line_counter <= 51 # for our purposes we need the first 50 peptides in the list
 			if fieldnames.empty?
 				fieldnames = row
 				replicate_names = row[5..16]
@@ -123,101 +124,54 @@ FasterCSV.open(outfile,'w') do |csv|
 				mzs = spectrum.mz
 				intensities = spectrum.intensity
 
-				pep = Pep.new(peptide, mod_positions)
-				y = pep.assign(mzs, pep.yions)
-				ranked_idx = []
-				# grab legitimate y ions and rank them in intensity desc
-				idxset = []
-				yset = []
-				mzset = []
-				intset=[]
-				y.each_index do |i|
-					if y[i] && y[i][0] && !y[i][1].nil? && y[i][1] > 0
-						idxset.push(i)
-						yset.push(y[i][0])
-						mzset.push(mzs[i])
-						intset.push(intensities[i])
-					end
-				end
-				intset.each do
-					maxi = intset.index(intset.max())
-					ranked_idx.push( idxset[maxi] )
-					intset[maxi] = 0
-				end
+				pep = Pep.new(peptide, mzs, intensities, mod_positions)
+				assigned_yions = pep.assigned_yions
+				
+				# Pick up the 3 most significant transitions from MS2 spectrum for each peptide & print transitions file
+				ranked_idx = pep.ranked_yions_intensities_idx
 				ranked_idx.each_with_index do |i,ii|
-					if( y[i] &&
-						!y[i][0].nil? && 1
-						y[i][0] > 0 && ii < 3 )
-						yidx = y[i][0] - 1
-						csv <<  [query_no,
-						repl_with_highest_score,
-						highest_scored_protein_accno,
-						highest_scored_protein_desc,
-						peptide,
-						modification,
-						pep.to_s,
-						title,
-						charge,
-						rtinseconds.to_f / 60 ,
-						highest_score,
-						cutoff,
-						parent_mass,
-						calc_mass,
-						delta,
-						mzs[i],
-						intensities[i],
-						ii, # the mz intensity rank
-						y[i][0],
-						pep.yions[yidx][0], # y ion sequence
-						y[i][1] - H ,
-						y[i][1],
-						y[i][1] + (H * 2)
+					if( assigned_yions[i] && !assigned_yions[i][0].nil? && 1
+						assigned_yions[i][0] > 0 && ii < 3)
+						yidx = assigned_yions[i][0] - 1
+						csv << [
+							query_no,
+							repl_with_highest_score,
+							highest_scored_protein_accno,
+							highest_scored_protein_desc,
+							peptide,
+							modification,
+							pep.to_s,
+							title,
+							charge,
+							rtinseconds.to_f / 60 ,
+							highest_score,
+							cutoff,
+							parent_mass,
+							calc_mass,
+							delta,
+							mzs[i],
+							intensities[i],
+							ii, # the mz intensity rank
+							assigned_yions[i][0],
+							pep.yions[yidx][0], # y ion sequence
+							assigned_yions[i][1] - H ,
+							assigned_yions[i][1],
+							assigned_yions[i][1] + (H * 2)
 						]
 					end
 				end
 
-				# get the peaks of all assigned yions table (with mass-intensity pairs)
-				assigned_ions = Array.new
-				unassigned_ions = Array.new
-				assigned_ions_hash = {}
-				all_labels = []
-				ranked_idx.each_with_index do |i,ii|
-					if( y[i] && !y[i][0].nil? && 1
-						y[i][0] > 0 )
-						assigned_ions << Array.new
-						if all_labels.include? "y(#{y[i][0]})"
-							next
-						end
-						assigned_ions << [y[i][1],intensities[i],"y(#{y[i][0]})"]
-						all_labels << "y(#{y[i][0]})"
-						assigned_ions_hash[intensities[i]] = "y(#{y[i][0]})"
-					end
-				end
-				assigned_ions.reject! { |c| c.empty? }
-
-
-				# get all ions (mass-intensity-index) and the label(index) for the assigned ones
-				itf.puts "#{repl_with_highest_score}, #{query_no}, #{peptide}"
-				itf.puts(%w{ mass intensity y-index }.join(","))
-				for i in 0..mzs.length-1
-					if assigned_ions_hash.has_key?(intensities[i].to_f)
-						itf.puts [mzs[i], intensities[i], "y(#{y[i][0]})"].join(',')
-					else
-						itf.puts [mzs[i], intensities[i], ''].join(',')
-					end
-				end
-
-
-				# plot the spectra
-				figure_filename = "#{resultsfolder}/figures/figure_#{repl_with_highest_score}_#{query_no}_#{peptide}.svg"
-				gplot(peptide, title, assigned_ions, mzs, intensities, figure_filename)
-
-# 				# get the ions table - full extra
-# 				itf.puts(%w{ aa b-idx y-idx bion b b++ NA b0 yion y y++ NA y0 }.join(","))
-# 				itf.puts pep.iontable.collect {|x| x.join(',')}
-				
-
+# 				# print the ionstable file
+# 				itf.puts "#{repl_with_highest_score}, #{query_no}, #{peptide}"
+# 				itf.puts(%w{ mass intensity y-index }.join(","))
+# 				pep.print_all_yionstable_to_filehandle(itf)
+# 
+# 				# plot the spectra
+# 				assigned_yionstable = pep.assigned_yionstable
+# 				figure_filename = "#{resultsfolder}/figures/figure_#{repl_with_highest_score}_#{query_no}_#{peptide}.svg"
+# 				gplot(peptide, title, assigned_yionstable, mzs, intensities, figure_filename)
 			end
-		end
+		end #ends if for counting the first 50 entries
 	end
 end
+
